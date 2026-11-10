@@ -10,13 +10,15 @@
   function $(s, r) { return (r || document).querySelector(s); }
   function $$(s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); }
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
-  function fmt(s) {
-    var t = esc(s);
+  function g1() { return document.body.dataset.grade === '1'; }
+  function ivs(s) { return (g1() && KL.applyIVS) ? KL.applyIVS(s) : s; }
+  function fmt(s, noIvs) {
+    var t = esc(noIvs ? s : ivs(s));
     t = t.replace(/\[f:([0-9?]+)\/([0-9?]+)\]/g, function (m, a, b) { return '<span class="frac"><span class="fn">' + a + '</span><span class="fd">' + b + '</span></span>'; });
     t = t.replace(/\*\*(.+?)\*\*/g, '<b>$1</b>').replace(/\n/g, '<br>');
     return t;
   }
-  function plain(s) { return String(s || '').replace(/\[f:([0-9?]+)\/([0-9?]+)\]/g, function (m, a, b) { return b + '分之' + (a === '?' ? '幾' : a); }).replace(/[{}*]/g, ''); }
+  function plain(s) { return String(s || '').replace(/[\u{E01E0}-\u{E01EF}]/gu, '').replace(/\[f:([0-9?]+)\/([0-9?]+)\]/g, function (m, a, b) { return b + '分之' + (a === '?' ? '幾' : a); }).replace(/[{}*]/g, ''); }
   function stripTags(h) { var d = document.createElement('div'); d.innerHTML = h; return d.textContent || ''; }
   function shuffle(a) { a = a.slice(); for (var i = a.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)); var t = a[i]; a[i] = a[j]; a[j] = t; } return a; }
   function pad(n) { return (n < 10 ? '0' : '') + n; }
@@ -112,7 +114,7 @@
   function blanksOf(q) { return q.blanks || [{ ans: q.ans, unit: q.unit, pre: q.pre, kb: q.kb }]; }
 
   // ---------- 畫面共用 ----------
-  function setTheme(t) { document.body.dataset.theme = t || 'base'; }
+  function setTheme(t) { document.body.dataset.theme = t || 'base'; var p = P(); document.body.dataset.grade = p ? String(p.grade) : '3'; }
   function stars(n) { var s = ''; for (var i = 0; i < 3; i++) s += '<i class="' + (i < n ? 'on' : '') + '">★</i>'; return '<span class="stars">' + s + '</span>'; }
   function header() {
     var p = P(); var l = level(p.xp); var a = lvlXp(l), b = lvlXp(l + 1); var pct = Math.max(3, Math.round(100 * (p.xp - a) / (b - a)));
@@ -177,7 +179,7 @@
       '<label class="lbl">遊戲暱稱（最多8個字）</label><input id="nm" maxlength="8" placeholder="例如：閃電小龍" autocomplete="off">' +
       '<p class="warn">⚠️ 請取一個<b>遊戲暱稱</b>，不要用真實姓名喔！</p>' +
       '<label class="lbl">選一個頭像</label><div class="avpick">' + FREE_AV.map(function (a, i) { return '<button class="avb' + (i ? '' : ' on') + '" data-av="' + a + '">' + a + '</button>'; }).join('') + '</div>' +
-      '<label class="lbl">年級</label><div class="gpick"><button class="gb on" data-g="3">三年級</button><button class="gb" data-g="1">一年級（建置中）</button></div>' +
+      '<label class="lbl">年級</label><div class="gpick"><button class="gb on" data-g="3">三年級</button><button class="gb" data-g="1">一年級</button></div>' +
       '<button class="btn go big" id="mk">🚀 開始冒險！</button></div></div>';
     $$('.avb').forEach(function (b) { b.onclick = function () { $$('.avb').forEach(function (x) { x.classList.remove('on'); }); b.classList.add('on'); sel = b.dataset.av; sfx('pick'); }; });
     $$('.gb').forEach(function (b) { b.onclick = function () { $$('.gb').forEach(function (x) { x.classList.remove('on'); }); b.classList.add('on'); grade = +b.dataset.g; sfx('pick'); }; });
@@ -205,7 +207,7 @@
     }).join('');
     var nWrong = Object.keys(p.wrong).length;
     app.innerHTML = header() + '<main class="home">' +
-      '<h2 class="sect">🗺️ 選擇冒險世界</h2><div class="worlds">' + (worlds || '<div class="card note">一年級的關卡正在建造中，敬請期待！🚧</div>') + '</div>' +
+      '<h2 class="sect">🗺️ 選擇冒險世界</h2><div class="worlds">' + (worlds || '<div class="card note">這個年級的關卡正在建造中，敬請期待！🚧</div>') + '</div>' +
       '<h2 class="sect">🧰 工具箱</h2><div class="tools">' +
       '<button class="tool" data-go="wrong"><span>📕</span><b>錯題本</b><small>' + nWrong + ' 題待複習</small></button>' +
       '<button class="tool" data-go="collect"><span>🏆</span><b>收藏・陷阱圖鑑</b><small>' + p.rewards.length + ' 個收藏</small></button>' +
@@ -213,7 +215,7 @@
       '<button class="tool" data-go="save"><span>📦</span><b>存檔碼</b><small>換裝置用</small></button>' +
       '<button class="tool" data-go="parent"><span>👨‍👩‍👦</span><b>家長專區</b><small>學習報告</small></button>' +
       '<button class="tool" data-go="title"><span>🔁</span><b>換角色</b><small>&nbsp;</small></button>' +
-      '</div><p class="ver">學習基地 v1.0.0</p></main>';
+      '</div><p class="ver">學習基地 v1.1.0</p></main>';
   }
 
   // ---------- 科目頁 ----------
@@ -265,10 +267,20 @@
     draw();
   }
   // 預習卡內容是作者撰寫的 HTML，只額外處理分數記號
-  function fmtHtml(h) { return String(h).replace(/\[f:([0-9?]+)\/([0-9?]+)\]/g, function (m, a, b) { return '<span class="frac"><span class="fn">' + a + '</span><span class="fd">' + b + '</span></span>'; }); }
+  function fmtHtml(h) { return ivs(String(h)).replace(/\[f:([0-9?]+)\/([0-9?]+)\]/g, function (m, a, b) { return '<span class="frac"><span class="fn">' + a + '</span><span class="fd">' + b + '</span></span>'; }); }
 
   // ---------- 關卡流程 ----------
+  // 選項順序每次打亂，避免孩子記住「答案都在①」
+  function shuffleQ(q) {
+    if ((q.type !== 'choice' && q.type !== 'multi') || q.fixed) return q;
+    var perm = shuffle(q.opts.map(function (o, i) { return i; }));
+    var c = Object.assign({}, q);
+    c.opts = perm.map(function (i) { return q.opts[i]; });
+    c.ans = q.type === 'choice' ? perm.indexOf(q.ans) : q.ans.map(function (a) { return perm.indexOf(a); }).sort();
+    return c;
+  }
   function startSession(c) {
+    c.qs = c.qs.map(shuffleQ);
     R = { mode: c.mode, sid: c.sid, uid: c.uid, exam: c.exam, title: c.title, qs: c.qs, i: 0, res: [], combo: 0, gain: { xp: 0, coins: 0, care: 0 }, t0: Date.now(), done: false, st: null };
     go('play');
   }
@@ -298,7 +310,7 @@
       sg.t.split(/(\[f:[0-9?]+\/[0-9?]+\]|[，。、？！：；「」『』（）()\s,.!?…—]+)/).filter(Boolean).forEach(function (pt) {
         if (/^\[f:/.test(pt)) { out.push({ t: pt, tap: true }); return; }
         if (PUN.test(pt)) { out.push({ t: pt, tap: false }); return; }
-        (pt.match(/[0-9]+|[^0-9]{1,3}/g) || []).forEach(function (x) { out.push({ t: x, tap: true }); });
+        (pt.match(/[0-9]+|(?:[^0-9][\u{E01E0}-\u{E01EF}]?){1,3}/gu) || []).forEach(function (x) { out.push({ t: x, tap: true }); });
       });
     });
     return out;
@@ -328,26 +340,27 @@
     var timer = R.mode === 'exam' ? '<span class="timer" id="timer"></span>' : (R.combo >= 2 ? '<span class="combo">🔥 連對 ' + R.combo + '</span>' : '');
     var stem = '';
     if (st.stage === 'keys') {
-      st.toks = st.toks || tokenize(q.q, q.keys);
+      st.toks = st.toks || tokenize(ivs(q.q), (q.keys || []).map(ivs));
       stem = '<div class="keyhint">🔍 <b>陷阱偵探時間！</b>先點選題目裡的<b>關鍵字</b>（重要的條件或問法），再開始作答。</div><div class="stem toks">' +
-        st.toks.map(function (t, i) { return t.tap ? '<span class="tok' + (st.sel[i] ? ' sel' : '') + '" data-tok="' + i + '">' + fmt(t.t) + '</span>' : '<span class="punc">' + esc(t.t) + '</span>'; }).join('') + '</div>' +
+        st.toks.map(function (t, i) { return t.tap ? '<span class="tok' + (st.sel[i] ? ' sel' : '') + '" data-tok="' + i + '">' + fmt(t.t, true) + '</span>' : '<span class="punc">' + esc(t.t) + '</span>'; }).join('') + '</div>' +
         '<button class="btn pri" id="keysDone">圈好了 ✔</button>';
     } else if (st.stage === 'keysResult') {
       stem = '<div class="stem toks">' + st.toks.map(function (t, i) {
         var c = t.key ? (st.sel[i] ? 'k-ok' : 'k-miss') : (st.sel[i] ? 'x' : '');
-        return t.tap ? '<span class="tok ' + c + '">' + fmt(t.t) + '</span>' : '<span class="punc">' + esc(t.t) + '</span>';
+        return t.tap ? '<span class="tok ' + c + '">' + fmt(t.t, true) + '</span>' : '<span class="punc">' + esc(t.t) + '</span>';
       }).join('') + '</div><div class="keymsg ' + st.keyCls + '">' + st.keyMsg + '</div><button class="btn go" id="toAnswer">開始作答 ▶</button>';
     } else {
-      var shown = st.toks ? st.toks.map(function (t) { return t.key ? '<mark>' + fmt(t.t) + '</mark>' : fmt(t.t); }).join('') : fmt(q.q);
+      var shown = st.toks ? st.toks.map(function (t) { return t.key ? '<mark>' + fmt(t.t, true) + '</mark>' : fmt(t.t, true); }).join('') : fmt(q.q);
       stem = '<div class="stem">' + shown + '</div>' + answerArea(q);
     }
-    app.innerHTML = header() + '<main class="play"><div class="ptop"><button class="btn sm ghost" id="quit">✖ 離開</button><div class="ptitle">' + esc(R.title) + '</div>' + timer + '</div>' + progressHtml() +
-      '<div class="qcard' + (q.trap && R.mode !== 'exam' ? ' trapq' : '') + '"><div class="qmeta">' + (q.sec ? '<span class="sec">' + esc(q.sec) + '</span>' : '') +
+    app.innerHTML = header() + '<main class="play"><div class="ptop"><button class="btn sm ghost" id="quit">✖ 離開</button><div class="ptitle">' + esc(R.title) + '</div>' + timer + (g1() ? '<button class="btn sm ghost" id="autoRd">' + (S.settings.autoRead !== false ? '🗣️ 自動唸：開' : '🤫 自動唸：關') + '</button>' : '') + '</div>' + progressHtml() +
+      '<div class="qcard' + (q.trap && R.mode !== 'exam' ? ' trapq' : '') + (q.plain ? ' nobpmf' : '') + '"><div class="qmeta">' + (q.sec ? '<span class="sec">' + esc(q.sec) + '</span>' : '') +
       '<span class="qno">第 ' + (R.i + 1) + ' 題</span>' + (q.pts ? '<span class="pts">' + q.pts + ' 分</span>' : '') +
       (q.trap && R.mode !== 'exam' ? '<span class="trapflag">⚠️ 陷阱題</span>' : '') + '<button class="say" id="say" aria-label="朗讀題目">🔊</button></div>' +
       (q.passage ? '<details class="passage" open><summary>📜 閱讀文章（點一下可收合）</summary><div>' + fmt(q.passage) + '</div></details>' : '') +
-      (q.table ? tableHtml(q.table) : '') + stem + '<div id="fb"></div></div></main>';
+      (q.table ? tableHtml(q.table) : '') + (q.svg ? '<div class="qsvg">' + q.svg + '</div>' : '') + stem + '<div id="fb"></div></div></main>';
     bindPlay(q);
+    if (g1() && S.settings.autoRead !== false && st.stage === 'answer' && !st.spoken) { st.spoken = true; setTimeout(function () { var b = $('#say'); if (b && b.isConnected) b.click(); }, 350); }
   }
 
   function answerArea(q) {
@@ -399,6 +412,7 @@
     $('#quit').onclick = function () {
       modal('<h2>要離開嗎？</h2><p>' + (R.mode === 'exam' || R.mode === 'quiz' ? '這次的作答不會計分喔。' : '已經答過的題目會保留紀錄。') + '</p>', [{ t: '繼續作答', cls: 'pri' }, { t: '離開', cls: 'ghost', fn: function () { var sid = R.sid; R = null; go(sid ? 's/' + sid : 'home'); } }]);
     };
+    if ($('#autoRd')) $('#autoRd').onclick = function () { S.settings.autoRead = S.settings.autoRead === false; save(); $('#autoRd').textContent = S.settings.autoRead !== false ? '🗣️ 自動唸：開' : '🤫 自動唸：關'; };
     $('#say').onclick = function () { speak((q.passage && st.stage !== 'keys' ? '' : '') + q.q + (q.opts ? '。選項：' + q.opts.map(function (o, i) { return (i + 1) + '，' + o; }).join('。') : '') + (q.type === 'cloze' ? '。' + q.text.replace(/\{\d+\}/g, '空格') : '')); };
     if (R.mode === 'exam') {
       var tm = $('#timer'); var lim = (R.exam.time || 40) * 60;
@@ -515,7 +529,7 @@
   function submit(a) {
     var q = cur(), st = R.st; var g = grade(q, a);
     st.answered = true;
-    R.res.push({ qid: q.id, a: a, g: g });
+    R.res.push({ qid: q.id, q: q, a: a, g: g });
     record(q, g);
     if (R.mode === 'quiz' || R.mode === 'exam') { save(); next(); return; }
     // 練習模式：馬上回饋
@@ -580,14 +594,14 @@
     var r = R.result, n = R.qs.length, s = KL.subjects[R.sid];
     var showStars = R.mode === 'quiz' || R.mode === 'exam';
     var msg = r.score >= 95 ? '太厲害了！完美通關！' : r.score >= 80 ? '很棒！再細心一點就滿分了！' : r.score >= 60 ? '過關了！看看錯的題目，下次會更好。' : '別灰心！先看解析，再挑戰一次。';
-    var wrongN = R.res.filter(function (x) { return !x.g.ok && Q[x.qid].type !== 'open'; }).length;
+    var wrongN = R.res.filter(function (x) { return !x.g.ok && x.q.type !== 'open'; }).length;
     app.innerHTML = header() + '<main class="result"><div class="rcard"><h2>' + esc(R.title) + '</h2><div class="score">' + r.score + '<small>' + (R.mode === 'practice' || R.mode === 'wrong' ? '％' : '分') + '</small></div>' +
       (showStars ? '<div class="rstars">' + stars(r.stars) + '</div>' : '') + '<p class="rmsg">' + msg + '</p>' +
       '<p>答對 <b>' + r.correct + '</b> / ' + n + ' 題' + (R.gain.care ? '　🔍細心 +' + R.gain.care : '') + '</p><div class="earn">+' + r.xp + ' XP　💎 +' + r.coins + '</div>' +
       (r.newRw ? '<div class="newrw">🎁 獲得新收藏：<span class="rwbig">' + r.newRw.icon + '</span> ' + esc(r.newRw.name) + '</div>' : '') +
       '<div class="rbtns"><button class="btn" data-go="' + (s ? 's/' + R.sid : 'home') + '">◀ 回去</button>' + (wrongN ? '<button class="btn" data-go="wrong">📕 錯題本（' + wrongN + '）</button>' : '') + '<button class="btn pri" id="again">🔁 再挑戰</button></div></div>' +
       '<h3 class="sect">📋 逐題檢討</h3><div class="review">' + R.res.map(function (x, i) {
-        var q = Q[x.qid], T = q.trap && KL.TRAPS[q.trap];
+        var q = x.q || Q[x.qid], T = q.trap && KL.TRAPS[q.trap];
         return '<details class="rv ' + (x.g.ok ? 'ok' : 'bad') + '"' + (x.g.ok ? '' : ' open') + '><summary><span class="mk">' + (x.g.ok ? '✅' : (x.g.score > 0 ? '🟡' : '❌')) + '</span> 第' + (i + 1) + '題　' + esc(plain(q.q).slice(0, 34)) + (plain(q.q).length > 34 ? '…' : '') + '</summary>' +
           '<div class="rvb"><p>📝 題目：' + fmt(q.q) + '</p>' + (q.type === 'cloze' ? '<p class="small">' + esc(q.text.replace(/\{\d+\}/g, '（　）')) + '</p>' : '') +
           '<p>🙋 你的答案：' + fmt(yourText(q, x.a)) + '</p><p>✅ 正確答案：' + fmt(answerText(q)) + '</p>' + (q.exp ? '<p>💡 ' + fmt(q.exp) + '</p>' : '') +

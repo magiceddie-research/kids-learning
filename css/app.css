@@ -331,3 +331,21 @@ textarea{width:100%;border:3px solid var(--line);border-radius:12px;padding:10px
 .mis{list-style:none;padding:0}
 .mis li{margin:6px 0;font-weight:700}
 .mis li.done{color:var(--go-d)}
+
+/* 一年級：國字＋注音（字嗨注音標楷，SIL OFL 1.1） */
+@font-face{font-family:'BpmfK';src:url('../fonts/bpmf-g1.woff2') format('woff2');font-display:swap}
+body[data-grade="1"] .stem,body[data-grade="1"] .opt .ot,body[data-grade="1"] .pool .opt,body[data-grade="1"] .sq,
+body[data-grade="1"] .pv-body,body[data-grade="1"] .pv-card h2,body[data-grade="1"] .passage div,body[data-grade="1"] .fbe,body[data-grade="1"] .fba,
+body[data-grade="1"] .fbt,body[data-grade="1"] .rvb,body[data-grade="1"] .hero .intro,body[data-grade="1"] .uhead h3,body[data-grade="1"] .opts.tf .opt,
+body[data-grade="1"] .tok,body[data-grade="1"] .stem mark{font-family:'BpmfK',"Noto Sans TC","Microsoft JhengHei",sans-serif;font-weight:400}
+body[data-grade="1"] .stem{font-size:1.9em;line-height:1.7}
+body[data-grade="1"] .opt{font-size:1.5em;min-height:72px}
+body[data-grade="1"] .pv-body{font-size:1.5em}
+body[data-grade="1"] .passage div{font-size:1.6em;line-height:1.8}
+body[data-grade="1"] .fbe,body[data-grade="1"] .fba,body[data-grade="1"] .fbt{font-size:1.3em}
+body[data-grade="1"] .fin{font-size:1.8em;width:150px}
+body[data-grade="1"] .say{width:64px;height:56px;font-size:1.7em;background:#ffe066}
+body[data-grade="1"] .nobpmf .stem,body[data-grade="1"] .nobpmf .opt .ot,body[data-grade="1"] .plainf{font-family:"Noto Sans TC","Microsoft JhengHei",sans-serif!important;font-weight:700}
+@media (max-width:560px){body[data-grade="1"] .stem{font-size:1.55em}body[data-grade="1"] .opt{font-size:1.3em}}
+.qsvg{text-align:center;margin:6px 0}
+.clock{width:180px;height:180px}

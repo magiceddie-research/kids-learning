@@ -1,7 +1,7 @@
 // 陷阱類型總表：所有科目共用
 window.KL = window.KL || {};
 KL.subjects = KL.subjects || {};
-KL.order = { 3: ['chinese3', 'math3', 'social3', 'sci3'], 1: [] };
+KL.order = { 3: ['chinese3', 'math3', 'social3', 'sci3'], 1: ['chinese1', 'math1', 'life1'] };
 KL.TRAPS = {
   extra:     { icon: '🎒', name: '多餘資訊', tip: '題目裡有用不到的數字或資料。先找出「問什麼」，再挑需要的資料來算。' },
   compare:   { icon: '⚖️', name: '比較句', tip: '看到「A比B多／少」，先想清楚誰多、誰少，再決定用加法還是減法。' },

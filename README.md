@@ -13,3 +13,6 @@
 - `js/app.js`：共用引擎（角色、計分、關卡、錯題本、存檔碼、家長專區）
 - `js/labs.js`：自然互動實驗
 - `data/*.js`：各科題庫與期末模擬考
+
+## 字型授權
+一年級的注音字型使用「字嗨注音標楷」（ButTaiwan/bpmfvs），依 SIL Open Font License 1.1 授權，只截取網站用到的字。授權與聲明見 `fonts/`。
