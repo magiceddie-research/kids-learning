@@ -58,13 +58,13 @@
               score += 5; api.sfx('ok'); api.award(5, 1);
               r++; step = 'name';
               if (r >= rounds.length) return api.done();
-              vane = shuffle([0, 90, 180, 270])[0];
+              vane = shuffle([0, 90, 180, 270].filter(function (a) { return a !== rounds[r].a; }))[0];
               draw('✅ 正確！風向標的箭頭指向風吹來的方向（' + d.n + '方）。下一回合！');
             } else { api.sfx('bad'); draw('❌ 還不對喔。風是從<b>電風扇那一邊</b>吹來的，箭頭要轉過去指著它。'); step = 'vane'; }
           };
         }
       }
-      vane = 90; draw();
+      vane = shuffle([0, 90, 180, 270].filter(function (a) { return a !== rounds[0].a; }))[0]; draw();
     }
   };
 
